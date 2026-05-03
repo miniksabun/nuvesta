@@ -3,198 +3,196 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>NUVESTA</title>
+  <title>NUVESTA - Portföy Yönetimi</title>
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  
   <style>
     *{box-sizing:border-box;margin:0;padding:0}
-    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f3;padding-top:125px;padding-bottom:60px}
-    header{position:fixed;top:0;left:0;right:0;z-index:1000;height:125px;background:#0D5EAF;display:flex;align-items:center;justify-content:space-between;padding:0 24px;}
+    body{font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;background:#f0f2f5;padding-top:125px;padding-bottom:60px}
+    
+    header{position:fixed;top:0;left:0;right:0;z-index:1000;height:125px;background:#0D5EAF;display:flex;align-items:center;justify-content:space-between;padding:0 24px;box-shadow:0 2px 10px rgba(0,0,0,0.1)}
     .header-left{display:flex;align-items:center;gap:16px}
-    .header-left img{width:100px;height:100px;object-fit:contain}
-    .header-brand{font-size:32px;font-weight:700;color:#FFD700;letter-spacing:.08em}
-    .header-menu { display: flex; align-items: center; color: #FFD700; font-size: 14px; font-weight: 600; gap: 12px; }
-    .header-menu a { color: inherit; text-decoration: none; cursor: pointer; }
-    .filters{position:fixed;top:125px;left:0;right:0;z-index:999;display:flex;gap:10px;flex-wrap:wrap;padding:10px 16px;background:#fff;border-bottom:1px solid #e5e5e5;align-items:flex-end;}
-    .fg{display:flex;flex-direction:column;gap:3px}
-    .fg label{font-size:11px;color:#888;font-weight:500;text-transform:uppercase;}
-    .fg select{font-size:13px;padding:6px 10px;border-radius:8px;border:1px solid #ddd;min-width:120px;}
-    .golden-btn{align-self:flex-end;padding:7px 14px;border-radius:8px;border:1.5px solid #d4a017;background:#fffdf0;color:#7a5200;font-size:13px;font-weight:600;cursor:pointer;}
-    .golden-btn.active{background:#fef08a;border-color:#b8860b;}
-    #map-container { position: relative; width: 100%; height: calc(100vh - 125px - 55px - 60px); margin-top: 55px; }
+    .header-left img{width:80px;height:80px;object-fit:contain}
+    .header-brand{font-size:28px;font-weight:700;color:#FFD700;letter-spacing:1px}
+    
+    .header-menu { display: flex; gap: 20px; color: #FFD700; font-size: 14px; font-weight: 600; }
+    .header-menu a { color: inherit; text-decoration: none; cursor: pointer; transition: opacity 0.2s; }
+    .header-menu a:hover { opacity: 0.8; }
+
+    .filters{position:fixed;top:125px;left:0;right:0;z-index:999;display:flex;gap:15px;padding:12px 24px;background:#fff;border-bottom:1px solid #ddd;align-items:flex-end;overflow-x:auto;}
+    .fg{display:flex;flex-direction:column;gap:4px}
+    .fg label{font-size:10px;color:#666;font-weight:700;text-transform:uppercase}
+    .fg select{padding:8px;border-radius:6px;border:1px solid #ccc;font-size:13px;min-width:130px;outline:none}
+
+    .golden-btn{padding:8px 16px;border-radius:6px;border:2px solid #D4A017;background:#fff;color:#7a5200;font-size:13px;font-weight:700;cursor:pointer;transition: all 0.3s;}
+    .golden-btn.active{background:#D4A017;color:#fff;}
+
+    #map-container { position: relative; width: 100%; height: calc(100vh - 125px - 60px - 60px); margin-top: 60px; }
     #map { width: 100%; height: 100%; }
-    .stats-overlay { position: absolute; top: 20px; right: 20px; background: rgba(13, 94, 175, 0.6); color: white; padding: 12px 20px; border-radius: 12px; z-index: 1001; backdrop-filter: blur(4px); pointer-events: none; text-align: right; }
-    .stats-count { font-size: 20px; font-weight: 700; color: #FFD700; display: block; }
-    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; z-index: 2000; backdrop-filter: blur(5px); }
-    .modal-content { background: rgba(0, 91, 174, 0.9); color: #fff; width: 75%; height: 75%; border-radius: 20px; padding: 40px; overflow-y: auto; position: relative; }
-    .modal-close { position: absolute; top: 20px; right: 25px; font-size: 30px; color: #fff; cursor: pointer; background: none; border: none; }
-    .modal-content h2 { color: #FFD700; margin-bottom: 25px; }
-    .modal-section p { margin-bottom: 14px; line-height: 1.6; }
-    .leaflet-popup-content-wrapper{border-radius:14px!important;padding:0!important;overflow:hidden;}
-    .leaflet-popup-content{margin:0!important;width:270px!important}
-    .pu-img-wrap{width:100%;height:150px;position:relative;}
-    .pu-img-wrap img{width:100%;height:100%;object-fit:cover;}
-    .pu-delivery-badge{position:absolute;bottom:8px;left:8px;background:#fff;color:#0D5EAF;font-size:10px;font-weight:700;padding:3px 10px;border-radius:20px;}
-    .pu-golden-badge{position:absolute;top:8px;right:8px;font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;background:#fef08a;color:#713f12;border:1px solid #fbbf24;}
-    .pu-body{padding:15px;background:#fff}
-    .pu-title{font-size:16px;font-weight:700;color:#0D5EAF;}
-    .pu-price-val{font-size:16px;font-weight:700;color:#0D5EAF;margin-top:8px;}
-    .pu-rental-info{font-size:13px;color:#d4a017;font-weight:600;margin-bottom:8px;}
-    .pu-details{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:10px}
-    .pu-detail{background:#f8f9fa;border-radius:8px;padding:7px}
-    .pu-btn{display:block;width:100%;padding:10px;margin-top:10px;border-radius:8px;border:none;background:#0D5EAF;color:#fff;font-weight:600;cursor:pointer;}
-    footer{position:fixed;bottom:0;left:0;right:0;z-index:1000;height:60px;background:#0D5EAF;display:flex;align-items:center;padding:0 24px;color:#fff;font-size:13px;}
+
+    .stats-overlay { position: absolute; top: 20px; right: 20px; background: rgba(13, 94, 175, 0.85); color: white; padding: 15px; border-radius: 10px; z-index: 1001; pointer-events: none; min-width: 180px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+    .stats-count { font-size: 22px; font-weight: 800; color: #FFD700; display: block; }
+    
+    /* Pop-up Tasarımı */
+    .leaflet-popup-content-wrapper{border-radius:12px;padding:0;overflow:hidden}
+    .leaflet-popup-content{margin:0!important;width:280px!important}
+    .pu-img{width:100%;height:140px;object-fit:cover;background:#eee}
+    .pu-body{padding:15px}
+    .pu-title{font-size:16px;font-weight:700;color:#0D5EAF;margin-bottom:5px}
+    .pu-price{font-size:15px;font-weight:700;color:#333;margin-bottom:10px}
+    .pu-info{font-size:13px;color:#d4a017;font-weight:600;margin-bottom:5px}
+    .pu-btn{width:100%;padding:10px;background:#0D5EAF;color:#fff;border:none;border-radius:6px;font-weight:600;cursor:pointer;margin-top:10px}
+
+    footer{position:fixed;bottom:0;left:0;right:0;height:60px;background:#0D5EAF;color:#fff;display:flex;align-items:center;padding:0 24px;font-size:12px;z-index:1000}
   </style>
 </head>
 <body>
 
 <header>
   <div class="header-left">
-    <img src="images/wing.png" alt="Nuvesta Logo"/>
+    <img src="images/wing.png" alt="Logo"/>
     <div class="header-brand">NUVESTA</div>
   </div>
   <nav class="header-menu">
     <a onclick="location.reload()">PROJELER</a>
-    <span style="opacity:0.5">|</span>
-    <a onclick="toggleModal(true)">GOLDEN VISA INFO</a>
-    <span style="opacity:0.5">|</span>
-    <a href="#">İLETİŞİM</a>
+    <a onclick="alert('Golden Visa dökümanı yükleniyor...')">VISA INFO</a>
+    <a href="mailto:info@nuvesta.com">İLETİŞİM</a>
   </nav>
 </header>
 
-<div id="gvModal" class="modal-overlay" onclick="toggleModal(false)">
-  <div class="modal-content" onclick="event.stopPropagation()">
-    <button class="modal-close" onclick="toggleModal(false)">&times;</button>
-    <h2>GREEK GOLDEN VISA</h2>
-    <div class="modal-section">
-      <p><b>Fact:</b> This is a residency program, not citizenship. Greek citizenship requires 7 year of residency along with language exam after 7th year.</p>
-      <p><b>Validity:</b> The residency permit is valid for 5 years and is renewable as long as the property ownership is maintained.</p>
-      <p><b>Minimum Investment:</b> Minimum of €250,000 for commercial-to-residential conversions and renovations in buidings. Almost all of them are in mainland, in Athens. No minimum area limit.</p>
-      <p><b>Family Inclusion:</b> All family members can benefit within this €250,000 property acquisition. The total cost of state taxes, title deed fees, and service charges for the application should not exceed 10% of the property value for whole family. Covers the main investor, spouse, children up to age 21, and the parents of both the applicant and spouse.</p>
-      <p><b>Explanation:</b> Sisters and brother cannot be benefited from Golden Visa, if one of them buys a property. But if their parent buys a property and if sister & brother are lower than 21. In this case, Golden Visa will be valid up to 21 years of age for them. Maximum 24 years if they are student.</p>
-      <p>A property could be acquired on behalf of children greater than 15 years of age. In this case, both parents could be benefited from Golden Visa, as well.</p>
-      <p><b>Higher Thresholds:</b> For standard residential purchases, the minimum is €400,000 areas other than regions of central Athens, Thessaloniki, Mykanos and Santorini and islands with a greater population of 3.100; these requires min. €800,000. Minimum area of the property should be 120 m².</p>
-      <p>Please be informed that due to high limit regulations and local culture, there is no high-rise residential buildings in Greece being developed after 1980. All alternatives is in the buildings with 5 floors maximum.</p>
-      <p><b>Rental Guarantee:</b> Maximum 4% per year in selected projects.</p>
-      <p><b>Duration:</b> Goes up to 4 years with 4 year renewals.</p>
-    </div>
-  </div>
-</div>
-
 <div class="filters">
-  <div class="fg"><label>Teslim Durumu</label><select id="f-durum" onchange="applyFilter()"><option value="">Hepsi</option><option value="Ready">Hazır</option><option value="TBA">TBA</option><option value="April 2026">Nisan 2026</option><option value="August 2026">Ağustos 2026</option><option value="September 2026">Eylül 2026</option><option value="October 2026">Ekim 2026</option><option value="December 2026">Aralık 2026</option><option value="January 2027">Ocak 2027</option><option value="February 2027">Şubat 2027</option><option value="March 2027">Mart 2027</option></select></div>
-  <div class="fg"><label>Fiyat</label><select id="f-fiyat" onchange="applyFilter()"><option value="">Hepsi</option><option value="lt250">< €250K</option><option value="250to300">€250K-300K</option><option value="300to400">€300K-400K</option><option value="400to800">€400K-800K</option><option value="gt800">> €800K</option></select></div>
-  <div class="fg"><label>Konum</label><select id="f-konum" onchange="applyFilter()"><option value="">Hepsi</option><option value="Aegina Island">Aegina Island</option><option value="Acharnai">Acharnai</option><option value="Agia Paraskevi">Agia Paraskevi</option><option value="Alimos">Alimos</option><option value="Chalandri">Chalandri</option><option value="Ermioni">Ermioni</option><option value="Gerakas">Gerakas</option><option value="Glyfada">Glyfada</option><option value="Glyka Nera">Glyka Nera</option><option value="Keratsini">Keratsini</option><option value="Redestou">Redestou</option><option value="Vasilikon">Vasilikon</option></select></div>
-  <div class="fg"><label>Bölge</label><select id="f-bolge" onchange="applyFilter()"><option value="">Hepsi</option><option value="Central Attica">Central Attica</option><option value="East Attica">East Attica</option><option value="North Attica">North Attica</option><option value="Peloponnese">Peloponnese</option><option value="Piraeus">Piraeus</option><option value="South Attica">South Attica</option><option value="West Attica">West Attica</option></select></div>
-  <div class="fg"><label>Kira Garantisi</label><select id="f-kira" onchange="applyFilter()"><option value="">Hepsi</option><option value="YES">Var</option><option value="NO">Yok</option></select></div>
-  <div class="fg"><label>250K GOLDEN VISA</label><button class="golden-btn" id="golden-btn" onclick="toggleGolden()">🏅 Uygun Projeler</button></div>
+  <div class="fg">
+    <label>Teslim Durumu</label>
+    <select id="f-durum" onchange="applyFilter()">
+      <option value="">Hepsi</option>
+      <option value="Ready">Hazır</option>
+      <option value="2026">2026 Teslim</option>
+      <option value="2027">2027 Teslim</option>
+    </select>
+  </div>
+  <div class="fg">
+    <label>Kira Garantisi</label>
+    <select id="f-kira" onchange="applyFilter()">
+      <option value="">Hepsi</option>
+      <option value="YES">Var</option>
+      <option value="NO">Yok</option>
+    </select>
+  </div>
+  <div class="fg">
+    <label>Golden Visa</label>
+    <button class="golden-btn" id="golden-btn" onclick="toggleGolden()">🏅 250K Uygunluk</button>
+  </div>
 </div>
 
 <div id="map-container">
   <div id="map"></div>
-  <div class="stats-overlay"><span class="stats-count" id="h-count">0 proje</span><span class="stats-range" id="h-range">—</span></div>
+  <div class="stats-overlay">
+    <span class="stats-count" id="h-count">Yükleniyor...</span>
+    <small id="h-sub">nuvesta_db.csv kontrol ediliyor</small>
+  </div>
 </div>
 
-<footer><b>NUVESTA</b>, Yunanistan'ın en iyi konut geliştiricileri ile çalışmaktadır.</footer>
+<footer>© 2026 NUVESTA Real Estate. Tüm veriler nuvesta_db.csv dosyasından güncellenmektedir.</footer>
 
 <script>
 let projects = [];
-let leafletMarkers = [];
+let markers = [];
 let goldenActive = false;
-const googleScriptUrl = "https://script.google.com/macros/s/AKfycbx5uQv1jn4BDGxd76niITowe5NTZTv2zYsbEEVx2rHVerc7-F9GjzL4JAwL2BNjguOPIw/exec";
 
-const map = L.map('map').setView([37.97, 23.73], 9);
-L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { attribution: '© CARTO' }).addTo(map);
+// Haritayı başlat
+const map = L.map('map').setView([37.97, 23.73], 11);
+L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { 
+    attribution: '© OpenStreetMap' 
+}).addTo(map);
 
-async function loadData() {
-    try {
-        const res = await fetch(googleScriptUrl);
-        projects = await res.json();
-        initMarkers();
-    } catch (e) { console.log("Hata:", e); }
+// CSV'den verileri oku
+function loadData() {
+    Papa.parse("nuvesta_db.csv", {
+        download: true,
+        header: true,
+        dynamicTyping: true,
+        skipEmptyLines: true,
+        complete: function(results) {
+            projects = results.data;
+            console.log("Veri yüklendi:", projects);
+            createMarkers();
+        },
+        error: function(err) {
+            document.getElementById('h-count').textContent = "Hata!";
+            document.getElementById('h-sub').textContent = "nuvesta_db.csv bulunamadı.";
+        }
+    });
 }
 
-function initMarkers() {
-    leafletMarkers.forEach(m => map.removeLayer(m));
-    leafletMarkers = [];
+function createMarkers() {
+    markers.forEach(m => map.removeLayer(m));
+    markers = [];
+
     projects.forEach(p => {
-        const m = L.marker([p.lat, p.lng], {icon: makeIcon(p.goldenVisa)})
-                   .addTo(map)
-                   .bindPopup(makePopup(p), {maxWidth: 290, minWidth: 270});
+        if(!p.lat || !p.lng) return;
+
+        const isG = (p.goldenVisa === true || p.goldenVisa === "TRUE");
+        const color = isG ? "#D4A017" : "#0D5EAF";
+        
+        const icon = L.divIcon({
+            html: `<div style="background:${color}; width:15px; height:15px; border-radius:50%; border:2px solid white; box-shadow:0 0 5px rgba(0,0,0,0.3)"></div>`,
+            className: '', iconSize: [15, 15]
+        });
+
+        const m = L.marker([p.lat, p.lng], {icon: icon})
+                   .bindPopup(buildPopup(p));
+        
         m._data = p;
-        leafletMarkers.push(m);
+        m._isG = isG;
+        markers.push(m);
+        m.addTo(map);
     });
     applyFilter();
 }
 
-function makeIcon(isG) {
-    const color = isG ? "#D4A017" : "#0D5EAF";
-    return L.divIcon({
-        html: `<svg width="28" height="28"><circle cx="14" cy="14" r="12" fill="${color}" stroke="white" stroke-width="2.5"/><circle cx="14" cy="14" r="5" fill="white" opacity="0.8"/></svg>`,
-        className: '', iconSize: [28, 28], iconAnchor: [14, 14], popupAnchor: [0, -16]
-    });
-}
-
-function makePopup(p) {
-    const gBadge = p.goldenVisa ? `<div class="pu-golden-badge">€250.000 Golden Visa</div>` : '';
-    const rentalText = p.rental === "NO" ? "Yok" : p.rental;
-    const bedRooms = p.bedrooms.split(/[-–,]/).map(b => b.trim() + "+1").join(" – ");
-    return `<div>
-        <div class="pu-img-wrap"><img src="${p.photo}" onerror="this.src='https://via.placeholder.com/270x150?text=Nuvesta'"/><div class="pu-delivery-badge">${p.deliveryLabel}</div>${gBadge}</div>
+function buildPopup(p) {
+    const rental = p.rental === "NO" ? "Yok" : p.rental;
+    return `
+        <img src="${p.photo || 'images/placeholder.jpg'}" class="pu-img" onerror="this.src='https://via.placeholder.com/280x140?text=NUVESTA'">
         <div class="pu-body">
             <div class="pu-title">${p.title}</div>
-            <div style="font-size:12px;color:#777">${p.location}, ${p.district}</div>
-            <div class="pu-price-val">${p.priceRange}</div>
-            <div class="pu-rental-info">Kira Garantisi: ${rentalText}</div>
-            <div class="pu-details">
-                <div class="pu-detail"><small>Net Alan</small><br><b>${p.area}</b></div>
-                <div class="pu-detail"><small>Tip</small><br><b>${bedRooms}</b></div>
-            </div>
-            <button class="pu-btn">Detayları İncele →</button>
+            <div class="pu-price">${p.priceRange || 'Fiyat Sorun'}</div>
+            <div class="pu-info">Kira Garantisi: ${rental}</div>
+            <div style="font-size:12px; color:#666; margin-bottom:10px">${p.location} / ${p.developer || ''}</div>
+            <button class="pu-btn" onclick="alert('Detaylar için iletişime geçin.')">İncele</button>
         </div>
-    </div>`;
+    `;
 }
 
-function toggleGolden() { goldenActive = !goldenActive; document.getElementById('golden-btn').classList.toggle('active', goldenActive); applyFilter(); }
-function toggleModal(s) { document.getElementById('gvModal').style.display = s ? 'flex' : 'none'; }
-function formatPrice(n) { return '€' + n.toLocaleString('de-DE'); }
-
-function priceMatch(minP, val) {
-    if(!val) return true;
-    if(val==='lt250') return minP < 250000;
-    if(val==='250to300') return minP >= 250000 && minP < 300000;
-    if(val==='300to400') return minP >= 300000 && minP < 400000;
-    if(val==='400to800') return minP >= 400000 && minP < 800000;
-    if(val==='gt800') return minP >= 800000;
-    return true;
+function toggleGolden() {
+    goldenActive = !goldenActive;
+    document.getElementById('golden-btn').classList.toggle('active', goldenActive);
+    applyFilter();
 }
 
 function applyFilter() {
     const d = document.getElementById('f-durum').value;
-    const f = document.getElementById('f-fiyat').value;
-    const k = document.getElementById('f-konum').value;
-    const b = document.getElementById('f-bolge').value;
     const r = document.getElementById('f-kira').value;
+    let count = 0;
 
-    let vis = 0, minP = Infinity, maxP = 0;
-
-    leafletMarkers.forEach(m => {
+    markers.forEach(m => {
         const p = m._data;
-        const gOk = !goldenActive || p.goldenVisa;
-        const rOk = !r || (r === "YES" ? p.rental !== "NO" : p.rental === "NO");
-        const show = (!d || p.delivery === d) && priceMatch(p.minPrice, f) && (!k || p.location === k) && (!b || p.district === b) && gOk && rOk;
+        const gMatch = !goldenActive || m._isG;
+        const rMatch = !r || (r === "YES" ? p.rental !== "NO" : p.rental === "NO");
+        const dMatch = !d || (p.delivery && p.delivery.toString().includes(d));
 
-        if(show) {
-            if(!map.hasLayer(m)) m.addTo(map);
-            vis++;
-            if(p.minPrice < minP) minP = p.minPrice;
-            if(p.maxPrice > maxP) maxP = p.maxPrice;
+        if(gMatch && rMatch && dMatch) {
+            m.addTo(map);
+            count++;
         } else {
-            if(map.hasLayer(m)) map.removeLayer(m);
+            map.removeLayer(m);
         }
     });
-    document.getElementById('h-count').textContent = vis + ' proje';
-    document.getElementById('h-range').textContent = vis > 0 ? formatPrice(minP) + ' – ' + formatPrice(maxP) : '—';
+    document.getElementById('h-count').textContent = count + " Proje";
+    document.getElementById('h-sub').textContent = "Filtrelere göre listelendi";
 }
 
 loadData();
