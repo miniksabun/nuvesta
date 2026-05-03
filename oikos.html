@@ -165,8 +165,8 @@ function applyFilter(){
     const p = m._data;
 
     const gMatch = !goldenActive || m._isG;
-    const hasRental = p.rental && p.rental !== "NO";
-    const rMatch = !r || (r === "YES" ? hasRental : !hasRental);
+
+    const rMatch = !r || (r === "YES" ? p.rental && p.rental !== "NO" : p.rental === "NO");
     const dMatch = !d || (p.delivery && p.delivery.toString().includes(d));
 
     if(gMatch && rMatch && dMatch){
