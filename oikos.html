@@ -99,7 +99,7 @@ L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
   attribution: '© OpenStreetMap'
 }).addTo(map);
 
-// ✅ KRİTİK FIX: absolute URL
+// ✅ CSV LOAD (absolute path + debug)
 function loadData() {
   Papa.parse("https://nuvesta.net/nuvesta_db.csv", {
     download: true,
@@ -107,6 +107,14 @@ function loadData() {
     dynamicTyping: true,
     skipEmptyLines: true,
     complete: function(results) {
+      console.log("CSV:", results);
+
+      if(!results.data || results.data.length === 0){
+        document.getElementById('h-count').textContent = "0";
+        document.getElementById('h-sub').textContent = "CSV boş veya hatalı";
+        return;
+      }
+
       projects = results.data;
       createMarkers();
     },
@@ -118,12 +126,13 @@ function loadData() {
   });
 }
 
+// ✅ MARKERS
 function createMarkers() {
   markers.forEach(m => map.removeLayer(m));
   markers = [];
 
   projects.forEach(p => {
-    if(!p.lat || !p.lng) return;
+    if(!p.lat || !p.lng || !p.title) return;
 
     const isG = (p.goldenVisa === true || p.goldenVisa === "TRUE");
 
@@ -136,7 +145,7 @@ function createMarkers() {
       .bindPopup(`
         <b>${p.title}</b><br>
         ${p.priceRange || ''}<br>
-        <img src="${p.photo || './images/placeholder.jpg'}" width="100%" onerror="this.src='./images/placeholder.jpg'">
+        <img src="./${p.photo || 'images/placeholder.jpg'}" width="100%" onerror="this.src='./images/placeholder.jpg'">
       `);
 
     m._data = p;
@@ -149,12 +158,7 @@ function createMarkers() {
   applyFilter();
 }
 
-function toggleGolden(){
-  goldenActive = !goldenActive;
-  document.getElementById('golden-btn').classList.toggle('active');
-  applyFilter();
-}
-
+// ✅ FILTER (rental FIX)
 function applyFilter(){
   const d = document.getElementById('f-durum').value;
   const r = document.getElementById('f-kira').value;
@@ -164,9 +168,9 @@ function applyFilter(){
   markers.forEach(m => {
     const p = m._data;
 
+    const hasRental = p.rental && p.rental !== "NO";
     const gMatch = !goldenActive || m._isG;
-
-    const rMatch = !r || (r === "YES" ? p.rental && p.rental !== "NO" : p.rental === "NO");
+    const rMatch = !r || (r === "YES" ? hasRental : !hasRental);
     const dMatch = !d || (p.delivery && p.delivery.toString().includes(d));
 
     if(gMatch && rMatch && dMatch){
@@ -178,6 +182,14 @@ function applyFilter(){
   });
 
   document.getElementById('h-count').textContent = count + " proje";
+  document.getElementById('h-sub').textContent = "Filtreye göre listelendi";
+}
+
+// ✅ GOLDEN TOGGLE
+function toggleGolden(){
+  goldenActive = !goldenActive;
+  document.getElementById('golden-btn').classList.toggle('active');
+  applyFilter();
 }
 
 loadData();
