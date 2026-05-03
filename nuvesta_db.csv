@@ -1,0 +1,10 @@
+title,lat,lng,location,district,priceRange,minPrice,maxPrice,area,bedrooms,units,delivery,deliveryLabel,goldenVisa,photo,developer,rental
+Kifisia Suites,38.06524374,23.77994427,lykovrisi,North Athens,€255.000 - €350.000,255000,350000,65 m² – 112 m²,1 – 2,6,December 2027,Aralık 2027,TRUE,images/oikoskifisia.jpeg,OIKOS,4%
+Curve,38.02113425,23.71175942,Agiou Fanouriou,North Athens,€288.000 - €290.000,288000,290000,59 m²,1 – 2,2,TBA,TBA,FALSE,images/oikoscurve.jpg,OIKOS,4%
+Levante Villas,38.50546812,23.37945211,Skroponeria,North Athens,€695.000,695000,,188 m²,3,4,June 2028,Haziran 2027,FALSE,images/oikoslevante.jpg,OIKOS,NO
+Riviera Suites,37.93158127,23.69349176,Palaio Faliro,South Athens,€505.000,505000,,117 m²,1 – 2,1,TBA,TBA,FALSE,images/oikosriviera.jpg,OIKOS,4%
+Meridia,37.94984397,23.65484082,Piraeus,Piraeus,€250.000 - €278.000,250000,278000,52 m² – 60 m²,1 – 2,2,December 2027,Aralık 2027,TRUE,images/oikosmeridia.jpg,OIKOS,3%
+Boulevard,37.95159798,23.69390322,Kallithea,South Athens,€250.000 - €330.000,250000,330000,35 m² – 61 m²,1,26,May 2028,Mayıs 2028,TRUE,images/oikosboulevard.jpg,OIKOS,3%
+The One,37.88045508,23.75528756,Glyfada,South Athens,€275.000 - €320.000,275000,320000,30 m² – 107 m²,1,12,December 2027,Aralık 2027,FALSE,images/oikostheone.jpg,OIKOS,NO
+Izi Lux,37.96499126,23.6996153,Tavros,South Athens,€298.000,298000,,66 m²,2,1,April 2027,Nisan 2027,FALSE,images/oikosizilux.jpg,OIKOS,NO
+Opus Residence,37.95637207,23.70761499,Kallithea,South Athens,€250.000 - €314.000,250000,314000,52 m² – 79m²,1 – 2,11,December 2027,Aralık 2027,TRUE,images/oikosopus.jpg,OIKOS,3%
