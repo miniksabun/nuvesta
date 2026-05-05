@@ -5,21 +5,19 @@
     body{font-family:'Segoe UI', Tahoma, sans-serif;background:#f0f2f5;padding-top:84px;padding-bottom:60px; overflow-x: hidden;}
     
     /* 1. Header %33 Küçültüldü (84px) */
-    header{position:fixed;top:0;left:0;right:0;z-index:1000;height:84px;background:#0D5EAF;display:flex;align-items:center;justify-content:space-between;padding:0 20px;box-shadow:0 2px 10px rgba(0,0,0,0.1);}
+    header{position:fixed;top:0;left:0;right:0;z-index:2000;height:84px;background:#0D5EAF;display:flex;align-items:center;justify-content:space-between;padding:0 20px;box-shadow:0 2px 10px rgba(0,0,0,0.1);}
     .header-left{display:flex;align-items:center;gap:12px}
     .header-left img{width:54px;height:54px;object-fit:contain;}
-    .header-brand{font-size:20px;font-weight:700;color:#FFD700;letter-spacing:1px}
+    .header-brand{font-size:20px;font-weight:700;color:#FFD700;}
     .header-menu { display: flex; gap: 15px; color: #FFD700; font-size: 13px; font-weight: 600; }
-    .header-menu a { color: inherit; text-decoration: none; cursor: pointer; }
 
     /* 2 & 3. Filtreler: Yan yana ve Etiketler İçeride */
-    .filters{position:fixed;top:84px;left:0;right:0;z-index:1000;display:flex;gap:4px;padding:8px;background:#fff;border-bottom:1px solid #ddd; height: 56px; align-items: center;}
+    .filters{position:fixed;top:84px;left:0;right:0;z-index:2000;display:flex;gap:4px;padding:8px;background:#fff;border-bottom:1px solid #ddd; height: 56px; align-items: center;}
     
     .fg{
         display:flex;
         flex-direction:column;
         flex:1;
-        min-width:0;
         background: #f9f9f9;
         border: 1px solid #ccc;
         border-radius: 6px;
@@ -51,9 +49,8 @@
         outline:none;
         width:100%;
         color: #333;
-        padding-top: 10px; /* Label için yer açar */
+        padding-top: 10px;
         cursor:pointer;
-        -webkit-appearance: none;
     }
 
     .golden-btn {
@@ -68,40 +65,38 @@
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        transition: all 0.2s;
     }
-    .golden-btn span:first-child { font-size: 8px; font-weight: 800; color: #888; text-transform: uppercase; }
+    .golden-btn span:first-child { font-size: 8px; font-weight: 800; text-transform: uppercase; color: #888; }
     .golden-btn span:last-child { font-size: 10px; font-weight: 700; }
     .golden-btn.active { border: 3px solid #FFD700 !important; background: #fffbe6; }
 
-    /* YÜZEN İSTATİSTİK PANELİ - Z-INDEX 9999 */
-    .stats-overlay { 
+    /* YÜZEN İSTATİSTİK PANELİ - MUTLAK GÖRÜNÜRLÜK */
+    #stats-panel { 
         position: fixed; 
-        top: 155px; 
+        top: 160px; 
         right: 15px; 
-        background: rgba(13, 94, 175, 0.85); 
-        backdrop-filter: blur(8px); 
+        background: #0D5EAF !important; /* Opak mavi yaptık ki görünsün */
         color: white; 
-        padding: 12px; 
+        padding: 12px 16px; 
         border-radius: 12px; 
-        z-index: 9999; 
+        z-index: 99999 !important; /* En üst katman */
         pointer-events: none; 
         min-width: 150px; 
-        box-shadow: 0 8px 20px rgba(0,0,0,0.3); 
-        border: 1px solid rgba(255,255,255,0.2); 
+        box-shadow: 0 4px 20px rgba(0,0,0,0.4); 
+        border: 2px solid #FFD700; 
         text-align: right; 
+        display: block !important;
     }
-    .stats-count { font-size: 18px; font-weight: 800; color: #FFD700; display: block; }
-    .stats-range { font-size: 12px; opacity: 0.9; }
+    .stats-count { font-size: 18px; font-weight: 800; color: #FFD700; display: block; margin-bottom: 2px; }
+    .stats-range { font-size: 12px; font-weight: 600; }
 
-    #map-container { position: relative; width: 100%; height: calc(100vh - 84px - 56px - 60px); margin-top: 56px; }
-    #map { width: 100%; height: 100%; z-index: 1; }
+    #map-container { position: relative; width: 100%; height: calc(100vh - 84px - 56px - 60px); margin-top: 56px; z-index: 1; }
+    #map { width: 100%; height: 100%; }
 
-    footer{position:fixed;bottom:0;left:0;right:0;height:60px;background:#0D5EAF;color:#fff;display:flex;align-items:center;padding:0 24px;font-size:12px;z-index:1000}
+    footer{position:fixed;bottom:0;left:0;right:0;height:60px;background:#0D5EAF;color:#fff;display:flex;align-items:center;padding:0 24px;font-size:12px;z-index:2000}
 
     @media (max-width: 768px) {
-        .stats-overlay { top: 135px; right: 10px; padding: 8px; min-width: 120px; }
-        .stats-count { font-size: 15px; }
+        #stats-panel { top: 145px; right: 10px; padding: 8px; min-width: 120px; }
     }
   </style>
 </head>
@@ -149,8 +144,8 @@
   </button>
 </div>
 
-<!-- İstatistik Paneli -->
-<div class="stats-overlay" id="stats-panel">
+<!-- İstatistik Paneli (Harita Dışına Alındı) -->
+<div id="stats-panel">
   <span class="stats-count" id="h-count">0 Proje</span>
   <span class="stats-range" id="h-range">Yükleniyor...</span>
 </div>
