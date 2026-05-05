@@ -2,71 +2,84 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <style>
     *{box-sizing:border-box;margin:0;padding:0}
-    body{font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;background:#f0f2f5;padding-top:125px;padding-bottom:60px}
+    /* 1. Body padding header yüksekliğine göre güncellendi (84px) */
+    body{font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;background:#f0f2f5;padding-top:84px;padding-bottom:60px}
     
-    header{position:fixed;top:0;left:0;right:0;z-index:1000;height:125px;background:#0D5EAF;display:flex;align-items:center;justify-content:space-between;padding:0 24px;box-shadow:0 2px 10px rgba(0,0,0,0.1);transition: all 0.3s ease;}
-    .header-left{display:flex;align-items:center;gap:16px}
-    .header-left img{width:80px;height:80px;object-fit:contain;transition: all 0.3s ease;}
-    .header-brand{font-size:28px;font-weight:700;color:#FFD700;letter-spacing:1px}
+    /* 1. Header yüksekliği %33 azaltıldı (~125px -> 84px) */
+    header{position:fixed;top:0;left:0;right:0;z-index:1000;height:84px;background:#0D5EAF;display:flex;align-items:center;justify-content:space-between;padding:0 24px;box-shadow:0 2px 10px rgba(0,0,0,0.1);transition: all 0.3s ease;}
+    .header-left{display:flex;align-items:center;gap:12px}
+    /* 1. Logo %33 küçültüldü (80px -> 54px) */
+    .header-left img{width:54px;height:54px;object-fit:contain;transition: all 0.3s ease;}
+    .header-brand{font-size:22px;font-weight:700;color:#FFD700;letter-spacing:1px}
     
-    .header-menu { display: flex; gap: 20px; color: #FFD700; font-size: 14px; font-weight: 600; }
+    .header-menu { display: flex; gap: 15px; color: #FFD700; font-size: 13px; font-weight: 600; }
     .header-menu a { color: inherit; text-decoration: none; cursor: pointer; transition: opacity 0.2s; }
     .header-menu a:hover { opacity: 0.8; }
 
-    /* FİLTRELER */
-    .filters{position:fixed;top:125px;left:0;right:0;z-index:999;display:flex;gap:10px;padding:12px 24px;background:#fff;border-bottom:1px solid #ddd;align-items:flex-end;overflow-x:auto;transition: all 0.3s ease;}
-    .fg{display:flex;flex-direction:column;gap:4px}
-    .fg label{font-size:10px;color:#666;font-weight:700;text-transform:uppercase}
-    .fg select{padding:8px;border-radius:6px;border:1px solid #ccc;font-size:13px;min-width:130px;outline:none; background: #fafafa;}
+    /* 2 & 3. FİLTRELER: Yan yana sığacak şekilde düzenlendi */
+    .filters{position:fixed;top:84px;left:0;right:0;z-index:999;display:flex;gap:8px;padding:8px 12px;background:#fff;border-bottom:1px solid #ddd;align-items:flex-end;overflow-x:hidden;transition: all 0.3s ease;}
+    .fg{display:flex;flex-direction:column;gap:2px; flex:1; min-width:0;}
+    .fg label{font-size:9px;color:#666;font-weight:700;text-transform:uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
+    
+    /* 2. Seçim yapıldığında kalın sarı çerçeve ayarı */
+    .fg select, .golden-btn{
+        padding:6px;
+        border-radius:6px;
+        border:1px solid #ccc;
+        font-size:12px;
+        width:100%;
+        outline:none; 
+        background: #fafafa;
+        transition: all 0.2s;
+    }
+    .fg select.selected-active { border: 2.5px solid #FFD700 !important; background: #fff; }
 
-    .golden-btn{padding:8px 16px;border-radius:6px;border:2px solid #D4A017;background:#fff;color:#7a5200;font-size:13px;font-weight:700;cursor:pointer;transition: all 0.3s; white-space: nowrap;}
-    .golden-btn.active{background:#D4A017;color:#fff;}
+    .golden-btn{
+        background:#fff;
+        color:#7a5200;
+        font-weight:700;
+        cursor:pointer;
+        white-space: nowrap;
+        border:1px solid #D4A017;
+        height: 31px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    /* 2. Golden Visa butonu aktifse kalın sarı çerçeve */
+    .golden-btn.active{border: 2.5px solid #FFD700 !important; background:#D4A017; color:#fff;}
 
-    #map-container { position: relative; width: 100%; height: calc(100vh - 125px - 60px - 60px); margin-top: 55px; }
+    #map-container { position: relative; width: 100%; height: calc(100vh - 84px - 60px - 50px); margin-top: 48px; }
     #map { width: 100%; height: 100%; }
 
     /* İSTATİSTİK PANELİ */
-    .stats-overlay { position: absolute; top: 20px; right: 20px; background: rgba(13, 94, 175, 0.7); backdrop-filter: blur(4px); color: white; padding: 15px; border-radius: 12px; z-index: 1001; pointer-events: none; min-width: 180px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.2); text-align: right; }
-    .stats-count { font-size: 22px; font-weight: 800; color: #FFD700; display: block; }
-    .stats-range { font-size: 14px; opacity: 0.9; }
+    .stats-overlay { position: absolute; top: 15px; right: 15px; background: rgba(13, 94, 175, 0.7); backdrop-filter: blur(4px); color: white; padding: 10px; border-radius: 10px; z-index: 1001; pointer-events: none; min-width: 150px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.2); text-align: right; }
+    .stats-count { font-size: 18px; font-weight: 800; color: #FFD700; display: block; }
+    .stats-range { font-size: 12px; opacity: 0.9; }
 
     /* MODERN POPUP TASARIMI */
-    .leaflet-popup-content-wrapper{border-radius:14px!important; padding:0!important; overflow:hidden; box-shadow:0 10px 30px rgba(0,0,0,0.2)!important;}
+    .leaflet-popup-content-wrapper{border-radius:14px!important; padding:0!important; overflow:hidden;}
     .leaflet-popup-content{margin:0!important; width:280px!important}
     .pu-img-wrap{width:100%; height:155px; position:relative; overflow:hidden; background:#eee}
     .pu-img-wrap img{width:100%; height:100%; object-fit:cover; display:block}
-    .pu-delivery-badge{position:absolute; bottom:10px; left:10px; background:#fff; color:#0D5EAF; font-size:11px; font-weight:700; padding:4px 12px; border-radius:20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);}
-    .pu-golden-badge{position:absolute; top:10px; right:10px; background:#fef08a; color:#713f12; font-size:11px; font-weight:700; padding:4px 10px; border-radius:20px; border:1px solid #fbbf24;}
     .pu-body{padding:18px; background:#fff}
-    .pu-title{font-size:18px; font-weight:700; color:#0D5EAF; margin-bottom:2px}
-    .pu-loc{font-size:13px; color:#777; margin-bottom:12px}
+    .pu-title{font-size:18px; font-weight:700; color:#0D5EAF;}
     .pu-price-val{font-size:18px; font-weight:700; color:#0D5EAF; margin-bottom:15px}
-    .pu-details{display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:15px}
-    .pu-detail{background:#f8f9fa; border-radius:10px; padding:8px 12px}
-    .pu-detail-label{font-size:10px; color:#999; font-weight:700; text-transform:uppercase; margin-bottom:2px}
-    .pu-detail-val{font-size:13px; font-weight:700; color:#333}
-    .pu-btn{display:block; width:100%; padding:12px; background:#0D5EAF; color:#fff; border:none; border-radius:10px; font-weight:600; cursor:pointer; font-size:14px; transition: background 0.2s;}
-    .pu-btn:hover{background:#0a4a8a}
+    .pu-btn{display:block; width:100%; padding:12px; background:#0D5EAF; color:#fff; border:none; border-radius:10px; font-weight:600; cursor:pointer;}
 
     footer{position:fixed;bottom:0;left:0;right:0;height:60px;background:#0D5EAF;color:#fff;display:flex;align-items:center;padding:0 24px;font-size:12px;z-index:1000}
 
-    /* MOBİL ÖZEL AYARLAR (768px altı) */
+    /* MOBİL ÖZEL AYARLAR */
     @media (max-width: 768px) {
-      body { padding-top: 65px; }
-      header { 
-        height: 65px; 
-        background: rgba(13, 94, 175, 0.85); 
-        backdrop-filter: blur(10px); 
-        padding: 0 12px;
-      }
-      .header-left { gap: 8px; }
-      .header-left img { width: 30px; height: 30px; }
-      .header-brand { font-size: 18px; }
-      .header-menu { gap: 10px; font-size: 10px; }
-      .filters { top: 65px; padding: 8px 12px; }
-      #map-container { height: calc(100vh - 65px - 60px - 50px); margin-top: 50px; }
-      .stats-overlay { top: 10px; right: 10px; padding: 8px; min-width: 140px; }
-      .stats-count { font-size: 16px; }
+      body { padding-top: 60px; }
+      header { height: 60px; padding: 0 12px; }
+      .header-left img { width: 35px; height: 35px; }
+      .header-brand { font-size: 16px; }
+      .header-menu { gap: 8px; font-size: 10px; }
+      .filters { top: 60px; padding: 6px 8px; gap: 4px; }
+      .fg label { font-size: 8px; }
+      .fg select, .golden-btn { font-size: 10px; padding: 4px; }
+      #map-container { margin-top: 45px; height: calc(100vh - 60px - 60px - 45px); }
     }
   </style>
 </head>
@@ -80,7 +93,7 @@
   <nav class="header-menu">
     <a onclick="location.reload()">PROJELER</a>
     <a href="#">VISA INFO</a>
-    <a href="/cdn-cgi/l/email-protection#fa93949c95ba948f8c9f898e9bd4949f8e">İLETİŞİM</a>
+    <a href="mailto:info@nuvesta.net">İLETİŞİM</a>
   </nav>
 </header>
 
@@ -106,12 +119,12 @@
   <div class="fg">
     <label>Konum</label>
     <select id="f-konum" onchange="applyFilter()">
-      <option value="">Tüm Konumlar</option>
+      <option value="">Tümü</option>
     </select>
   </div>
   <div class="fg">
-    <label>250K GOLDEN VISA</label>
-    <button class="golden-btn" id="golden-btn" onclick="toggleGolden()">🏅 Uygun Projeler</button>
+    <label>Golden Visa</label>
+    <button class="golden-btn" id="golden-btn" onclick="toggleGolden()">🏅 Uygun</button>
   </div>
 </div>
 
@@ -123,26 +136,20 @@
   </div>
 </div>
 
-<footer>© 2026 NUVESTA Real Estate - Seçkin Portföy Yönetimi</footer>
+<footer>© 2026 NUVESTA Real Estate</footer>
 
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script>
 <script>
-let projects = [];let markers = [];let goldenActive = false;
+let projects = []; let markers = []; let goldenActive = false;
 const map = L.map('map').setView([37.97, 23.73], 11);
 L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png').addTo(map);
 
 function loadData() {
   Papa.parse("https://nuvesta.net/nuvesta_db.csv", {
-    download: true,
-    header: true,
-    skipEmptyLines: true,
+    download: true, header: true, skipEmptyLines: true,
     complete: function(results) {
       projects = results.data.map(p => ({
-        ...p,
-        minPrice: parseFloat(p.minPrice) || 0,
-        maxPrice: parseFloat(p.maxPrice) || 0,
-        lat: parseFloat(p.lat),
-        lng: parseFloat(p.lng)
+        ...p, minPrice: parseFloat(p.minPrice) || 0, maxPrice: parseFloat(p.maxPrice) || 0,
+        lat: parseFloat(p.lat), lng: parseFloat(p.lng)
       }));
       updateLocationFilter();
       createMarkers();
@@ -156,25 +163,20 @@ function updateLocationFilter() {
   locations.forEach(loc => {
     if(loc) {
       let opt = document.createElement('option');
-      opt.value = loc;
-      opt.textContent = loc;
-      select.appendChild(opt);
+      opt.value = loc; opt.textContent = loc; select.appendChild(opt);
     }
   });
 }
 
 function createMarkers() {
-  markers.forEach(m => map.removeLayer(m));
-  markers = [];
+  markers.forEach(m => map.removeLayer(m)); markers = [];
   projects.forEach(p => {
     if(!p.lat || !p.lng) return;
     const isG = (p.goldenVisa === "TRUE" || p.goldenVisa === "true" || p.goldenVisa === true);
     const color = isG ? "#D4A017" : "#0D5EAF";
     const icon = L.divIcon({
-      html: `<svg width="24" height="24"><circle cx="12" cy="12" r="10" fill="${color}" stroke="white" stroke-width="2"/><circle cx="12" cy="12" r="4" fill="white" opacity="0.8"/></svg>`,
-      className: '',
-      iconSize: [24, 24],
-      iconAnchor: [12, 12]
+      html: `<svg width="24" height="24"><circle cx="12" cy="12" r="10" fill="${color}" stroke="white" stroke-width="2"/></svg>`,
+      className: '', iconSize: [24, 24], iconAnchor: [12, 12]
     });
     const m = L.marker([p.lat, p.lng], {icon: icon}).bindPopup(buildPopup(p), {maxWidth: 280});
     m._data = p; m._isG = isG; markers.push(m); m.addTo(map);
@@ -183,51 +185,43 @@ function createMarkers() {
 }
 
 function buildPopup(p) {
-  const gBadge = (p.goldenVisa === "TRUE" || p.goldenVisa === "true") ? `<div class="pu-golden-badge">€250.000 Golden Visa</div>` : '';
   const formattedBedrooms = p.bedrooms ? p.bedrooms.split(/[-–,]/).map(b => b.trim() + "+1").join(" – ") : '-';
-  return `
-    <div class="pu-img-wrap">
-      <img src="./${p.photo || 'images/placeholder.jpg'}" onerror="this.src='https://via.placeholder.com/270x150?text=Nuvesta'">
-      <div class="pu-delivery-badge">${p.deliveryLabel || p.delivery || 'TBA'}</div>
-      ${gBadge}
-    </div>
-    <div class="pu-body">
-      <div class="pu-title">${p.title}</div>
-      <div class="pu-loc">${p.location || ''}, ${p.district || ''}</div>
-      <div class="pu-price-val">${p.priceRange || ''}</div>
-      <div class="pu-details">
-        <div class="pu-detail">
-          <div class="pu-detail-label">Net Alan</div>
-          <div class="pu-detail-val">${p.area || '-'}</div>
-        </div>
-        <div class="pu-detail">
-          <div class="pu-detail-label">Daire Tipi</div>
-          <div class="pu-detail-val">${formattedBedrooms}</div>
-        </div>
-      </div>
-      <button class="pu-btn" onclick="window.open('https://wa.me/90XXXXXXXXXX', '_blank')">Detayları İncele →</button>
-    </div>`;
+  return `<div class="pu-img-wrap"><img src="./${p.photo || 'images/placeholder.jpg'}"></div>
+          <div class="pu-body"><div class="pu-title">${p.title}</div><div class="pu-price-val">${p.priceRange || ''}</div>
+          <button class="pu-btn" onclick="window.open('https://wa.me/905000000000', '_blank')">İletişime Geç →</button></div>`;
 }
 
 function applyFilter() {
-  const durum = document.getElementById('f-durum').value;
-  const fiyat = document.getElementById('f-fiyat').value;
-  const konum = document.getElementById('f-konum').value;
-  let count = 0; let minVisible = Infinity; let maxVisible = 0;
+  const dSelect = document.getElementById('f-durum');
+  const fSelect = document.getElementById('f-fiyat');
+  const kSelect = document.getElementById('f-konum');
+  
+  // 2. Seçim yapılmışsa sarı çerçeve ekle/çıkar
+  [dSelect, fSelect, kSelect].forEach(el => {
+      if(el.value !== "") el.classList.add('selected-active');
+      else el.classList.remove('selected-active');
+  });
+
+  let count = 0; let minVis = Infinity; let maxVis = 0;
   markers.forEach(m => {
     const p = m._data;
     const gMatch = !goldenActive || m._isG;
-    const dMatch = !durum || (p.delivery && p.delivery.includes(durum));
-    const kMatch = !konum || p.location === konum;
+    const dMatch = !dSelect.value || (p.delivery && p.delivery.includes(dSelect.value));
+    const kMatch = !kSelect.value || p.location === kSelect.value;
     let fMatch = true;
-    if(fiyat === 'lt250') fMatch = p.minPrice < 250000;
-    else if(fiyat === '250to400') fMatch = p.minPrice >= 250000 && p.minPrice <= 400000;
-    else if(fiyat === 'gt400') fMatch = p.minPrice > 400000;
-    if(gMatch && dMatch && kMatch && fMatch){ m.addTo(map); count++; if(p.minPrice < minVisible) minVisible = p.minPrice; if(p.maxPrice > maxVisible) maxVisible = p.maxPrice; } else { map.removeLayer(m); }
+    if(fSelect.value === 'lt250') fMatch = p.minPrice < 250000;
+    else if(fSelect.value === '250to400') fMatch = p.minPrice >= 250000 && p.minPrice <= 400000;
+    else if(fSelect.value === 'gt400') fMatch = p.minPrice > 400000;
+
+    if(gMatch && dMatch && kMatch && fMatch){
+      m.addTo(map); count++;
+      if(p.minPrice < minVis) minVis = p.minPrice;
+      if(p.maxPrice > maxVis) maxVis = p.maxPrice;
+    } else { map.removeLayer(m); }
   });
+
   document.getElementById('h-count').textContent = count + " Proje";
-  const rangeText = count > 0 ? `€${minVisible.toLocaleString()} - €${maxVisible.toLocaleString()}` : "—";
-  document.getElementById('h-range').textContent = rangeText;
+  document.getElementById('h-range').textContent = count > 0 ? `€${minVis.toLocaleString()} - €${maxVis.toLocaleString()}` : "—";
 }
 
 function toggleGolden() {
@@ -236,5 +230,4 @@ function toggleGolden() {
   applyFilter();
 }
 loadData();
-</script>
-</body></html>
+</script></body></html>
