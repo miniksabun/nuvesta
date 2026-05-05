@@ -4,33 +4,34 @@
     *{box-sizing:border-box;margin:0;padding:0}
     body{font-family:'Segoe UI', sans-serif;background:#f0f2f5;padding-top:84px;padding-bottom:60px}
     
-    /* 1. Header & Logo %33 Küçüldü */
-    header{position:fixed;top:0;left:0;right:0;z-index:1000;height:84px;background:#0D5EAF;display:flex;align-items:center;justify-content:space-between;padding:0 15px;box-shadow:0 2px 10px rgba(0,0,0,0.1);}
-    .header-left{display:flex;align-items:center;gap:10px}
+    /* 1. Header %33 Daha Az Yükseklik */
+    header{position:fixed;top:0;left:0;right:0;z-index:1000;height:84px;background:#0D5EAF;display:flex;align-items:center;justify-content:space-between;padding:0 20px;box-shadow:0 2px 10px rgba(0,0,0,0.1);}
+    .header-left{display:flex;align-items:center;gap:12px}
+    /* Logo %33 Küçültüldü */
     .header-left img{width:54px;height:54px;object-fit:contain;}
     .header-brand{font-size:20px;font-weight:700;color:#FFD700;}
-    .header-menu { display: flex; gap: 10px; color: #FFD700; font-size: 12px; font-weight: 600; }
+    .header-menu { display: flex; gap: 15px; color: #FFD700; font-size: 13px; font-weight: 600; }
     .header-menu a { color: inherit; text-decoration: none; cursor: pointer; }
 
     /* 2 & 3. Filtreler: Yan Yana ve Etiketler İçeride */
-    .filters{position:fixed;top:84px;left:0;right:0;z-index:999;display:flex;gap:4px;padding:8px;background:#fff;border-bottom:1px solid #ddd; height: 55px; align-items: center;}
+    .filters{position:fixed;top:84px;left:0;right:0;z-index:999;display:flex;gap:4px;padding:8px 12px;background:#fff;border-bottom:1px solid #ddd; height: 56px; align-items: center;}
     
     .fg{
         display:flex;
         flex-direction:column;
         flex:1;
-        min-width:0; /* Taşmayı önler */
+        min-width:0;
         background: #f9f9f9;
         border: 1px solid #ccc;
         border-radius: 6px;
-        padding: 2px 6px;
-        height: 42px;
+        padding: 2px 8px;
+        height: 44px;
         justify-content: center;
         transition: all 0.2s;
     }
     
     /* Seçim yapıldığında kalın sarı çerçeve */
-    .fg.selected-active { border: 3px solid #FFD700; background: #fff; }
+    .fg.selected-active { border: 3px solid #FFD700 !important; background: #fff; }
 
     .fg label{
         font-size:8px;
@@ -53,10 +54,9 @@
         cursor:pointer;
     }
 
-    /* Golden Visa Butonu kutu stiline uyarlandı */
     .golden-btn {
         flex: 1;
-        height: 42px;
+        height: 44px;
         border-radius: 6px;
         border: 1px solid #D4A017;
         background: #fff;
@@ -70,24 +70,37 @@
     }
     .golden-btn span:first-child { font-size: 8px; font-weight: 800; text-transform: uppercase; color: #888; }
     .golden-btn span:last-child { font-size: 10px; font-weight: 700; }
-    
-    /* Aktif Golden Visa */
-    .golden-btn.active { border: 3px solid #FFD700; background: #fffbe6; }
+    .golden-btn.active { border: 3px solid #FFD700 !important; background: #fffbe6; }
 
-    #map-container { position: relative; width: 100%; height: calc(100vh - 84px - 55px - 60px); margin-top: 55px; }
-    #map { width: 100%; height: 100%; z-index: 1; }
+    /* YÜZEN İSTATİSTİK PANELİ (Geri Geldi) */
+    .stats-overlay { 
+        position: fixed; 
+        top: 155px; /* header + filters + margin */
+        right: 20px; 
+        background: rgba(13, 94, 175, 0.8); 
+        backdrop-filter: blur(4px); 
+        color: white; 
+        padding: 12px; 
+        border-radius: 12px; 
+        z-index: 1001; 
+        pointer-events: none; 
+        min-width: 160px; 
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2); 
+        border: 1px solid rgba(255,255,255,0.2); 
+        text-align: right; 
+    }
+    .stats-count { font-size: 20px; font-weight: 800; color: #FFD700; display: block; }
+    .stats-range { font-size: 13px; opacity: 0.9; }
+
+    #map-container { position: relative; width: 100%; height: calc(100vh - 84px - 56px - 60px); margin-top: 56px; }
+    #map { width: 100%; height: 100%; }
 
     footer{position:fixed;bottom:0;left:0;right:0;height:60px;background:#0D5EAF;color:#fff;display:flex;align-items:center;padding:0 24px;font-size:12px;z-index:1000}
 
     @media (max-width: 768px) {
-        body { padding-top: 65px; }
-        header { height: 65px; }
-        .header-left img { width: 40px; height: 40px; }
-        .filters { top: 65px; padding: 5px; gap: 3px; }
-        .fg label { font-size: 7px; }
-        .fg select { font-size: 9px; }
-        .golden-btn span:last-child { font-size: 9px; }
-        #map-container { margin-top: 55px; }
+        .stats-overlay { top: 130px; right: 10px; padding: 8px; min-width: 130px; }
+        .stats-count { font-size: 16px; }
+        .stats-range { font-size: 11px; }
     }
   </style>
 </head>
@@ -114,7 +127,6 @@
       <option value="2027">2027</option>
     </select>
   </div>
-
   <div class="fg" id="fg-fiyat">
     <label>Fiyat Aralığı</label>
     <select id="f-fiyat" onchange="applyFilter()">
@@ -124,18 +136,22 @@
       <option value="gt400">> 400K</option>
     </select>
   </div>
-
   <div class="fg" id="fg-konum">
     <label>Konum</label>
     <select id="f-konum" onchange="applyFilter()">
       <option value="">Tümü</option>
     </select>
   </div>
-
   <button class="golden-btn" id="golden-btn" onclick="toggleGolden()">
       <span>Golden Visa</span>
-      <span>🏅 250K Uygun</span>
+      <span>🏅 Uygun</span>
   </button>
+</div>
+
+<!-- Yüzen Bilgi Paneli -->
+<div class="stats-overlay">
+  <span class="stats-count" id="h-count">0 Proje</span>
+  <span class="stats-range" id="h-range">—</span>
 </div>
 
 <div id="map-container">
@@ -149,13 +165,12 @@ let projects = []; let markers = []; let goldenActive = false;
 const map = L.map('map').setView([37.97, 23.73], 11);
 L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png').addTo(map);
 
-// Veri Yükleme ve Filtreleme Mantığı
 function loadData() {
   Papa.parse("https://nuvesta.net/nuvesta_db.csv", {
     download: true, header: true, skipEmptyLines: true,
     complete: function(results) {
       projects = results.data.map(p => ({
-        ...p, minPrice: parseFloat(p.minPrice) || 0,
+        ...p, minPrice: parseFloat(p.minPrice) || 0, maxPrice: parseFloat(p.maxPrice) || 0,
         lat: parseFloat(p.lat), lng: parseFloat(p.lng)
       }));
       updateLocationFilter();
@@ -188,10 +203,11 @@ function applyFilter() {
   const fVal = document.getElementById('f-fiyat').value;
   const kVal = document.getElementById('f-konum').value;
   
-  // 2. Kural: Seçim yapıldıysa kapsayıcı kutuya (fg) sarı kalın border ver
   document.getElementById('fg-durum').classList.toggle('selected-active', dVal !== "");
   document.getElementById('fg-fiyat').classList.toggle('selected-active', fVal !== "");
   document.getElementById('fg-konum').classList.toggle('selected-active', kVal !== "");
+
+  let count = 0; let minVis = Infinity; let maxVis = 0;
 
   markers.forEach(m => {
     const p = m._data;
@@ -203,9 +219,17 @@ function applyFilter() {
     else if(fVal === '250to400') fMatch = p.minPrice >= 250000 && p.minPrice <= 400000;
     else if(fVal === 'gt400') fMatch = p.minPrice > 400000;
 
-    if(gMatch && dMatch && kMatch && fMatch) m.addTo(map);
-    else map.removeLayer(m);
+    if(gMatch && dMatch && kMatch && fMatch) {
+        m.addTo(map); 
+        count++;
+        if(p.minPrice < minVis) minVis = p.minPrice;
+        if(p.maxPrice > maxVis) maxVis = p.maxPrice;
+    } else { map.removeLayer(m); }
   });
+
+  // Paneli Güncelle
+  document.getElementById('h-count').textContent = count + " Proje";
+  document.getElementById('h-range').textContent = count > 0 ? `€${minVis.toLocaleString()} - €${maxVis.toLocaleString()}` : "—";
 }
 
 function toggleGolden() {
