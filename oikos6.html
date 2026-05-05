@@ -2,84 +2,97 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <style>
     *{box-sizing:border-box;margin:0;padding:0}
-    /* 1. Body padding header yüksekliğine göre güncellendi (84px) */
+    /* Header yüksekliği 84px olarak ayarlandı */
     body{font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;background:#f0f2f5;padding-top:84px;padding-bottom:60px}
     
-    /* 1. Header yüksekliği %33 azaltıldı (~125px -> 84px) */
-    header{position:fixed;top:0;left:0;right:0;z-index:1000;height:84px;background:#0D5EAF;display:flex;align-items:center;justify-content:space-between;padding:0 24px;box-shadow:0 2px 10px rgba(0,0,0,0.1);transition: all 0.3s ease;}
+    header{position:fixed;top:0;left:0;right:0;z-index:1000;height:84px;background:#0D5EAF;display:flex;align-items:center;justify-content:space-between;padding:0 24px;box-shadow:0 2px 10px rgba(0,0,0,0.1);}
     .header-left{display:flex;align-items:center;gap:12px}
-    /* 1. Logo %33 küçültüldü (80px -> 54px) */
-    .header-left img{width:54px;height:54px;object-fit:contain;transition: all 0.3s ease;}
+    .header-left img{width:54px;height:54px;object-fit:contain;}
     .header-brand{font-size:22px;font-weight:700;color:#FFD700;letter-spacing:1px}
-    
     .header-menu { display: flex; gap: 15px; color: #FFD700; font-size: 13px; font-weight: 600; }
-    .header-menu a { color: inherit; text-decoration: none; cursor: pointer; transition: opacity 0.2s; }
-    .header-menu a:hover { opacity: 0.8; }
+    .header-menu a { color: inherit; text-decoration: none; cursor: pointer; }
 
-    /* 2 & 3. FİLTRELER: Yan yana sığacak şekilde düzenlendi */
-    .filters{position:fixed;top:84px;left:0;right:0;z-index:999;display:flex;gap:8px;padding:8px 12px;background:#fff;border-bottom:1px solid #ddd;align-items:flex-end;overflow-x:hidden;transition: all 0.3s ease;}
-    .fg{display:flex;flex-direction:column;gap:2px; flex:1; min-width:0;}
-    .fg label{font-size:9px;color:#666;font-weight:700;text-transform:uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
+    /* FİLTRELER: Etiketler kutu içine alındı */
+    .filters{position:fixed;top:84px;left:0;right:0;z-index:999;display:flex;gap:5px;padding:10px 12px;background:#fff;border-bottom:1px solid #ddd;}
     
-    /* 2. Seçim yapıldığında kalın sarı çerçeve ayarı */
-    .fg select, .golden-btn{
-        padding:6px;
-        border-radius:6px;
-        border:1px solid #ccc;
-        font-size:12px;
-        width:100%;
-        outline:none; 
+    .fg{
+        display:flex;
+        flex-direction:column;
+        flex:1;
         background: #fafafa;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        padding: 4px 8px;
         transition: all 0.2s;
+        height: 48px; /* Sabit yükseklik tasarrufu */
+        justify-content: center;
     }
-    .fg select.selected-active { border: 2.5px solid #FFD700 !important; background: #fff; }
-
-    .golden-btn{
-        background:#fff;
-        color:#7a5200;
-        font-weight:700;
+    
+    /* Etiket kutunun içinde küçük üst yazı */
+    .fg label{
+        font-size:8px;
+        color:#888;
+        font-weight:800;
+        text-transform:uppercase;
+        margin-bottom: -2px;
+        pointer-events: none;
+    }
+    
+    .fg select{
+        background:transparent;
+        border:none;
+        font-size:12px;
+        font-weight:600;
+        outline:none;
+        width:100%;
         cursor:pointer;
-        white-space: nowrap;
-        border:1px solid #D4A017;
-        height: 31px;
+        color: #333;
+    }
+
+    /* Golden Visa Butonu kutu yapısına uyduruldu */
+    .golden-btn-wrap {
         display: flex;
+        flex-direction: column;
+        flex: 1;
+        height: 48px;
+    }
+    .golden-btn {
+        height: 100%;
+        border-radius: 8px;
+        border: 1px solid #D4A017;
+        background: #fff;
+        color: #7a5200;
+        font-size: 11px;
+        font-weight: 700;
+        cursor: pointer;
+        display: flex;
+        flex-direction: column;
         align-items: center;
         justify-content: center;
     }
-    /* 2. Golden Visa butonu aktifse kalın sarı çerçeve */
-    .golden-btn.active{border: 2.5px solid #FFD700 !important; background:#D4A017; color:#fff;}
+    .golden-btn span { font-size: 8px; color: #888; text-transform: uppercase; margin-bottom: 2px; }
 
-    #map-container { position: relative; width: 100%; height: calc(100vh - 84px - 60px - 50px); margin-top: 48px; }
+    /* SEÇİM YAPILDIĞINDA KALIN SARI ÇERÇEVE */
+    .fg.selected-active, .golden-btn.active {
+        border: 3px solid #FFD700 !important;
+        background: #fff;
+    }
+    .golden-btn.active { background: #fffbe6; }
+
+    #map-container { position: relative; width: 100%; height: calc(100vh - 84px - 60px - 60px); margin-top: 60px; }
     #map { width: 100%; height: 100%; }
 
-    /* İSTATİSTİK PANELİ */
-    .stats-overlay { position: absolute; top: 15px; right: 15px; background: rgba(13, 94, 175, 0.7); backdrop-filter: blur(4px); color: white; padding: 10px; border-radius: 10px; z-index: 1001; pointer-events: none; min-width: 150px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.2); text-align: right; }
-    .stats-count { font-size: 18px; font-weight: 800; color: #FFD700; display: block; }
-    .stats-range { font-size: 12px; opacity: 0.9; }
-
-    /* MODERN POPUP TASARIMI */
-    .leaflet-popup-content-wrapper{border-radius:14px!important; padding:0!important; overflow:hidden;}
-    .leaflet-popup-content{margin:0!important; width:280px!important}
-    .pu-img-wrap{width:100%; height:155px; position:relative; overflow:hidden; background:#eee}
-    .pu-img-wrap img{width:100%; height:100%; object-fit:cover; display:block}
-    .pu-body{padding:18px; background:#fff}
-    .pu-title{font-size:18px; font-weight:700; color:#0D5EAF;}
-    .pu-price-val{font-size:18px; font-weight:700; color:#0D5EAF; margin-bottom:15px}
-    .pu-btn{display:block; width:100%; padding:12px; background:#0D5EAF; color:#fff; border:none; border-radius:10px; font-weight:600; cursor:pointer;}
-
-    footer{position:fixed;bottom:0;left:0;right:0;height:60px;background:#0D5EAF;color:#fff;display:flex;align-items:center;padding:0 24px;font-size:12px;z-index:1000}
-
-    /* MOBİL ÖZEL AYARLAR */
+    /* MOBİL DÜZENLEME */
     @media (max-width: 768px) {
-      body { padding-top: 60px; }
-      header { height: 60px; padding: 0 12px; }
-      .header-left img { width: 35px; height: 35px; }
-      .header-brand { font-size: 16px; }
-      .header-menu { gap: 8px; font-size: 10px; }
-      .filters { top: 60px; padding: 6px 8px; gap: 4px; }
-      .fg label { font-size: 8px; }
-      .fg select, .golden-btn { font-size: 10px; padding: 4px; }
-      #map-container { margin-top: 45px; height: calc(100vh - 60px - 60px - 45px); }
+        body { padding-top: 65px; }
+        header { height: 65px; padding: 0 10px; }
+        .header-left img { width: 35px; height: 35px; }
+        .header-brand { font-size: 16px; }
+        .filters { top: 65px; padding: 6px; gap: 4px; }
+        .fg { padding: 2px 5px; height: 42px; }
+        .fg select { font-size: 10px; }
+        .golden-btn { font-size: 9px; height: 42px; }
+        #map-container { margin-top: 55px; }
     }
   </style>
 </head>
@@ -98,8 +111,8 @@
 </header>
 
 <div class="filters">
-  <div class="fg">
-    <label>Teslim Durumu</label>
+  <div class="fg" id="fg-durum">
+    <label>Teslimat</label>
     <select id="f-durum" onchange="applyFilter()">
       <option value="">Hepsi</option>
       <option value="Ready">Hazır</option>
@@ -107,33 +120,34 @@
       <option value="2027">2027</option>
     </select>
   </div>
-  <div class="fg">
-    <label>Fiyat Aralığı</label>
+
+  <div class="fg" id="fg-fiyat">
+    <label>Fiyat</label>
     <select id="f-fiyat" onchange="applyFilter()">
       <option value="">Hepsi</option>
-      <option value="lt250">< €250K</option>
-      <option value="250to400">€250K - €400K</option>
-      <option value="gt400">> €400K</option>
+      <option value="lt250">< 250K</option>
+      <option value="250to400">250-400K</option>
+      <option value="gt400">> 400K</option>
     </select>
   </div>
-  <div class="fg">
+
+  <div class="fg" id="fg-konum">
     <label>Konum</label>
     <select id="f-konum" onchange="applyFilter()">
       <option value="">Tümü</option>
     </select>
   </div>
-  <div class="fg">
-    <label>Golden Visa</label>
-    <button class="golden-btn" id="golden-btn" onclick="toggleGolden()">🏅 Uygun</button>
+
+  <div class="golden-btn-wrap">
+    <button class="golden-btn" id="golden-btn" onclick="toggleGolden()">
+        <span>Vize</span>
+        🏅 Uygun
+    </button>
   </div>
 </div>
 
 <div id="map-container">
   <div id="map"></div>
-  <div class="stats-overlay">
-    <span class="stats-count" id="h-count">Yükleniyor...</span>
-    <span class="stats-range" id="h-range">Veri çekiliyor</span>
-  </div>
 </div>
 
 <footer>© 2026 NUVESTA Real Estate</footer>
@@ -148,7 +162,7 @@ function loadData() {
     download: true, header: true, skipEmptyLines: true,
     complete: function(results) {
       projects = results.data.map(p => ({
-        ...p, minPrice: parseFloat(p.minPrice) || 0, maxPrice: parseFloat(p.maxPrice) || 0,
+        ...p, minPrice: parseFloat(p.minPrice) || 0,
         lat: parseFloat(p.lat), lng: parseFloat(p.lng)
       }));
       updateLocationFilter();
@@ -172,56 +186,41 @@ function createMarkers() {
   markers.forEach(m => map.removeLayer(m)); markers = [];
   projects.forEach(p => {
     if(!p.lat || !p.lng) return;
-    const isG = (p.goldenVisa === "TRUE" || p.goldenVisa === "true" || p.goldenVisa === true);
+    const isG = (p.goldenVisa === "TRUE" || p.goldenVisa === "true");
     const color = isG ? "#D4A017" : "#0D5EAF";
     const icon = L.divIcon({
-      html: `<svg width="24" height="24"><circle cx="12" cy="12" r="10" fill="${color}" stroke="white" stroke-width="2"/></svg>`,
-      className: '', iconSize: [24, 24], iconAnchor: [12, 12]
+      html: `<svg width="20" height="20"><circle cx="10" cy="10" r="8" fill="${color}" stroke="white" stroke-width="2"/></svg>`,
+      className: '', iconSize: [20, 20], iconAnchor: [10, 10]
     });
-    const m = L.marker([p.lat, p.lng], {icon: icon}).bindPopup(buildPopup(p), {maxWidth: 280});
+    const m = L.marker([p.lat, p.lng], {icon: icon});
     m._data = p; m._isG = isG; markers.push(m); m.addTo(map);
   });
   applyFilter();
 }
 
-function buildPopup(p) {
-  const formattedBedrooms = p.bedrooms ? p.bedrooms.split(/[-–,]/).map(b => b.trim() + "+1").join(" – ") : '-';
-  return `<div class="pu-img-wrap"><img src="./${p.photo || 'images/placeholder.jpg'}"></div>
-          <div class="pu-body"><div class="pu-title">${p.title}</div><div class="pu-price-val">${p.priceRange || ''}</div>
-          <button class="pu-btn" onclick="window.open('https://wa.me/905000000000', '_blank')">İletişime Geç →</button></div>`;
-}
-
 function applyFilter() {
-  const dSelect = document.getElementById('f-durum');
-  const fSelect = document.getElementById('f-fiyat');
-  const kSelect = document.getElementById('f-konum');
+  const dVal = document.getElementById('f-durum').value;
+  const fVal = document.getElementById('f-fiyat').value;
+  const kVal = document.getElementById('f-konum').value;
   
-  // 2. Seçim yapılmışsa sarı çerçeve ekle/çıkar
-  [dSelect, fSelect, kSelect].forEach(el => {
-      if(el.value !== "") el.classList.add('selected-active');
-      else el.classList.remove('selected-active');
-  });
+  // Çerçeve kontrolü (Kapsayıcı div'lere (fg) sarı border ekler)
+  document.getElementById('fg-durum').classList.toggle('selected-active', dVal !== "");
+  document.getElementById('fg-fiyat').classList.toggle('selected-active', fVal !== "");
+  document.getElementById('fg-konum').classList.toggle('selected-active', kVal !== "");
 
-  let count = 0; let minVis = Infinity; let maxVis = 0;
   markers.forEach(m => {
     const p = m._data;
     const gMatch = !goldenActive || m._isG;
-    const dMatch = !dSelect.value || (p.delivery && p.delivery.includes(dSelect.value));
-    const kMatch = !kSelect.value || p.location === kSelect.value;
+    const dMatch = !dVal || (p.delivery && p.delivery.includes(dVal));
+    const kMatch = !kVal || p.location === kVal;
     let fMatch = true;
-    if(fSelect.value === 'lt250') fMatch = p.minPrice < 250000;
-    else if(fSelect.value === '250to400') fMatch = p.minPrice >= 250000 && p.minPrice <= 400000;
-    else if(fSelect.value === 'gt400') fMatch = p.minPrice > 400000;
+    if(fVal === 'lt250') fMatch = p.minPrice < 250000;
+    else if(fVal === '250to400') fMatch = p.minPrice >= 250000 && p.minPrice <= 400000;
+    else if(fVal === 'gt400') fMatch = p.minPrice > 400000;
 
-    if(gMatch && dMatch && kMatch && fMatch){
-      m.addTo(map); count++;
-      if(p.minPrice < minVis) minVis = p.minPrice;
-      if(p.maxPrice > maxVis) maxVis = p.maxPrice;
-    } else { map.removeLayer(m); }
+    if(gMatch && dMatch && kMatch && fMatch) m.addTo(map);
+    else map.removeLayer(m);
   });
-
-  document.getElementById('h-count').textContent = count + " Proje";
-  document.getElementById('h-range').textContent = count > 0 ? `€${minVis.toLocaleString()} - €${maxVis.toLocaleString()}` : "—";
 }
 
 function toggleGolden() {
