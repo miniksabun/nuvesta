@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>NUVESTA - Portföy Yönetimi</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;background:#f0f2f5;padding-top:125px;padding-bottom:60px}
+    header{position:fixed;top:0;left:0;right:0;z-index:3000;height:80px;background:#0D5EAF;display:flex;align-items:center;justify-content:space-between;padding:0 24px;box-shadow:0 2px 10px rgba(0,0,0,0.1)}
+    .header-left{display:flex;align-items:center;gap:16px}
+    .header-left img{width:40px;height:80px;object-fit:contain}
+    .header-brand{font-size:28px;font-weight:700;color:#FFD700;letter-spacing:1px}
+    .header-menu{display:flex;gap:20px;color:#FFD700;font-size:14px;font-weight:600}
+    .header-menu a{color:inherit;text-decoration:none;cursor:pointer;transition:opacity 0.2s}
+
+    /* FİLTRELER */
+    .filters{position:fixed;top:80px;left:0;right:0;z-index:2999;display:flex;gap:10px;padding:12px 24px;background:#fff;border-bottom:1px solid #ddd;align-items:flex-end;overflow-x:auto}
+    .fg{display:flex;flex-direction:column;gap:4px}
+    .fg label{font-size:10px;color:#666;font-weight:700;text-transform:uppercase}
+    .fg select{padding:8px;border-radius:6px;border:1px solid #ccc;font-size:13px;min-width:130px;outline:none;background:#fafafa}
+    .fg select.active-filter{background:#0D5EAF;color:#fff;border-color:#0D5EAF;font-weight:700}
+    .golden-btn{padding:8px 16px;border-radius:6px;border:2px solid #D4A017;background:#fff;color:#7a5200;font-size:13px;font-weight:700;cursor:pointer;transition:all 0.3s;white-space:nowrap}
+    .golden-btn.active{background:#D4A017;color:#fff}
+
+    #map-container{position:relative;width:100%;height:calc(100vh - 125px - 60px - 60px);margin-top:55px}
+    #map{width:100%;height:100%;z-index:1}
+
+    /* İSTATİSTİK PANELİ */
+    .stats-overlay{position:absolute;top:20px;right:20px;background:rgba(13,94,175,0.8);backdrop-filter:blur(4px);color:white;padding:15px;border-radius:12px;z-index:1001;pointer-events:none;min-width:180px;box-shadow:0 4px 15px rgba(0,0,0,0.2);border:1px solid rgba(255,255,255,0.2);text-align:right}
+    .stats-count{font-size:22px;font-weight:800;color:#FFD700;display:block}
+    .stats-range{font-size:14px;opacity:0.9}
+
+    /* MODERN POPUP TASARIMI */
+    .leaflet-popup-content-wrapper{border-radius:14px!important;padding:0!important;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,0.2)!important}
+    .leaflet-popup-content{margin:0!important;width:280px!important}
+    .pu-img-wrap{width:100%;height:155px;position:relative;overflow:hidden;background:#eee}
+    .pu-img-wrap img{width:100%;height:100%;object-fit:cover;display:block}
+    .pu-delivery-badge{position:absolute;bottom:10px;left:10px;background:#fff;color:#0D5EAF;font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px;box-shadow:0 2px 5px rgba(0,0,0,0.1)}
+    .pu-golden-badge{position:absolute;top:10px;right:10px;background:#fef08a;color:#713f12;font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;border:1px solid #fbbf24}
+    .pu-body{padding:18px;background:#fff}
+    .pu-title{font-size:18px;font-weight:700;color:#0D5EAF;margin-bottom:2px}
+    .pu-loc{font-size:13px;color:#777;margin-bottom:12px}
+    .pu-price-val{font-size:18px;font-weight:700;color:#0D5EAF;margin-bottom:15px}
+    .pu-details{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:15px}
+    .pu-detail{background:#f8f9fa;border-radius:10px;padding:8px 12px}
+    .pu-detail-label{font-size:10px;color:#999;font-weight:700;text-transform:uppercase;margin-bottom:2px}
+    .pu-detail-val{font-size:13px;font-weight:700;color:#333}
+    .pu-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:12px;background:#fff;color:#0D5EAF;border:2px solid #0D5EAF;border-radius:10px;font-weight:600;cursor:pointer;font-size:14px;transition:background 0.2s;text-align:center;text-decoration:none}
+
+    /* SABİT ETİKETLER */
+    .static-label{background:rgba(255,255,255,0.5)!important;border:1px solid rgba(0,0,0,0.1)!important;font-weight:700;color:#333;box-shadow:0 2px 5px rgba(0,0,0,0.1)!important;font-size:11px}
+    .leaflet-tooltip-right:before{border-right-color:rgba(255,255,255,0.5)!important}
+
+    footer{position:fixed;bottom:0;left:0;right:0;height:60px;background:#0D5EAF;color:#fff;display:flex;align-items:center;padding:0 24px;font-size:12px;z-index:3000}
+
+    /* LOGIN EKRANI */
+    #login-overlay{position:fixed;inset:0;z-index:9999;background:#0D5EAF;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:0}
+    .login-box{background:#fff;border-radius:20px;padding:48px 40px;width:100%;max-width:380px;box-shadow:0 20px 60px rgba(0,0,0,0.25);display:flex;flex-direction:column;align-items:center;gap:24px}
+    .login-logo{display:flex;align-items:center;gap:12px;margin-bottom:4px}
+    .login-logo-brand{font-size:32px;font-weight:800;color:#0D5EAF;letter-spacing:2px}
+    .login-subtitle{font-size:13px;color:#999;text-align:center;margin-top:-16px}
+    .login-input-wrap{position:relative;width:100%}
+    .login-input-wrap input{width:100%;padding:14px 16px;border:2px solid #e0e0e0;border-radius:10px;font-size:15px;outline:none;transition:border-color 0.2s;letter-spacing:2px}
+    .login-input-wrap input:focus{border-color:#0D5EAF}
+    .login-input-wrap input.error{border-color:#e53e3e;animation:shake 0.3s ease}
+    @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+    .login-btn{width:100%;padding:14px;background:#0D5EAF;color:#FFD700;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;letter-spacing:1px;transition:background 0.2s}
+    .login-btn:hover{background:#0a4d91}
+    .login-error{font-size:13px;color:#e53e3e;text-align:center;min-height:18px}
+    .login-footer-text{font-size:11px;color:rgba(255,255,255,0.5);margin-top:24px}
+
+    /* VISA INFO MODAL */
+    .modal-overlay{display:none;position:fixed;inset:0;z-index:4000;background:rgba(0,0,0,0.45);align-items:center;justify-content:center;padding:20px}
+    .modal-overlay.open{display:flex}
+    .modal-content{background:rgba(13,94,175,0.5);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,0.25);border-radius:18px;padding:36px 32px;width:100%;max-width:580px;max-height:85vh;overflow-y:auto;color:#fff;position:relative;box-shadow:0 20px 60px rgba(0,0,0,0.4)}
+    .modal-close{position:absolute;top:14px;right:16px;background:rgba(255,255,255,0.15);border:none;color:#fff;font-size:22px;width:36px;height:36px;border-radius:50%;cursor:pointer;line-height:1;display:flex;align-items:center;justify-content:center}
+    .modal-close:hover{background:rgba(255,255,255,0.25)}
+    .modal-header{display:flex;align-items:center;gap:12px;margin-bottom:8px}
+    .modal-title{font-size:20px;font-weight:800;letter-spacing:1.5px;color:#FFD700;margin:0}
+    .modal-subtitle{font-size:11px;opacity:0.7;letter-spacing:0.5px;text-transform:uppercase;margin-top:2px}
+    .modal-section{margin-top:20px;padding-top:18px;border-top:1px solid rgba(255,255,255,0.2);display:flex;flex-direction:column;gap:13px;font-size:13.5px;line-height:1.7}
+    .modal-section b{color:#FFD700}
+  </style>
+</head>
+<body>
+
+<!-- LOGIN EKRANI -->
+<div id="login-overlay">
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="login-logo-brand">NUVESTA</div>
+    </div>
+    <div class="login-subtitle">Portföy Yönetim Sistemi</div>
+    <div class="login-input-wrap">
+      <input type="password" id="login-pass" placeholder="Şifrenizi girin" onkeydown="if(event.key==='Enter')checkLogin()"/>
+    </div>
+    <button class="login-btn" onclick="checkLogin()">GİRİŞ YAP</button>
+    <div class="login-error" id="login-error"></div>
+  </div>
+  <div class="login-footer-text">© 2026 NUVESTA Real Estate</div>
+</div>
+
+<header>
+  <div class="header-left">
+    <img src="./images/wing.png" alt="Logo"/>
+    <div class="header-brand">NUVESTA</div>
+  </div>
+  <nav class="header-menu">
+    <a onclick="location.reload()">PROJELER</a>
+    <a onclick="toggleModal(true)">VISA INFO</a>
+    <a href="mailto:info@nuvesta.net">İLETİŞİM</a>
+  </nav>
+</header>
+
+<div class="filters">
+  <div class="fg">
+    <label>Teslim Durumu</label>
+    <select id="f-durum" onchange="applyFilter()">
+      <option value="">Hepsi</option>
+      <option value="Ready">Hazır</option>
+      <option value="2026">2026</option>
+      <option value="2027">2027</option>
+    </select>
+  </div>
+  <div class="fg">
+    <label>Fiyat Aralığı</label>
+    <select id="f-fiyat" onchange="applyFilter()">
+      <option value="">Hepsi</option>
+      <option value="lt250">< €250K</option>
+      <option value="250to400">€250K - €400K</option>
+      <option value="gt400">> €400K</option>
+    </select>
+  </div>
+  <div class="fg">
+    <label>Kira Garantisi</label>
+    <select id="f-rental" onchange="applyFilter()">
+      <option value="">Hepsi</option>
+    </select>
+  </div>
+  <div class="fg">
+    <label>Konum</label>
+    <select id="f-konum" onchange="applyFilter()">
+      <option value="">Tüm Konumlar</option>
+    </select>
+  </div>
+  <div class="fg">
+    <label>250K GOLDEN VISA</label>
+    <button class="golden-btn" id="golden-btn" onclick="toggleGolden()">🏅 Uygun Projeler</button>
+  </div>
+</div>
+
+<div id="map-container">
+  <div id="map"></div>
+  <div class="stats-overlay">
+    <span class="stats-count" id="h-count">Yükleniyor...</span>
+    <span class="stats-range" id="h-range">Veri çekiliyor</span>
+  </div>
+</div>
+
+<footer>© 2026 NUVESTA Real Estate</footer>
+
+<!-- VISA INFO MODAL -->
+<div id="gvModal" class="modal-overlay" onclick="toggleModal(false)">
+  <div class="modal-content" onclick="event.stopPropagation()">
+    <button class="modal-close" onclick="toggleModal(false)">×</button>
+    <div class="modal-header">
+      <span style="font-size:28px">🇬🇷</span>
+      <div>
+        <h2 class="modal-title">GREEK GOLDEN VISA</h2>
+        <div class="modal-subtitle">Residency Investment Program</div>
+      </div>
+    </div>
+    <div class="modal-section">
+      <p><b>Fact:</b> This is a residency program, not citizenship. Greek citizenship requires 7 years of residency along with a language exam after the 7th year.</p>
+      <p><b>Validity:</b> The residency permit is valid for 5 years and is renewable as long as the property ownership is maintained.</p>
+      <p><b>Minimum Investment:</b> Minimum of €250,000 for commercial-to-residential conversions and renovations in buildings. Almost all of them are in mainland, in Athens. No minimum area limit.</p>
+      <p><b>Family Inclusion:</b> All family members can benefit within this €250,000 property acquisition. The total cost of state taxes, title deed fees, and service charges for the application should not exceed 10% of the property value for the whole family. Covers the main investor, spouse, children up to age 21, and the parents of both the applicant and spouse.</p>
+      <p><b>Explanation:</b> Sisters and brothers cannot benefit from Golden Visa if one of them buys a property. But if their parent buys a property and the siblings are younger than 21, Golden Visa will be valid up to age 21 (maximum 24 if they are students). A property could be acquired on behalf of children greater than 15 years of age — in this case, both parents could also benefit from Golden Visa.</p>
+      <p><b>Higher Thresholds:</b> For standard residential purchases, the minimum is €400,000 in areas other than regions of central Athens, Thessaloniki, Mykonos, and Santorini, and islands with a population greater than 3,100 — these require a minimum of €800,000. Minimum area of the property should be 120 m².</p>
+      <p>Please be informed that due to high-limit regulations and local culture, there are no high-rise residential buildings in Greece developed after 1980. All alternatives are in buildings with 5 floors maximum.</p>
+      <p><b>Rental Guarantee:</b> Maximum 4% per year in selected projects.</p>
+      <p><b>Duration:</b> Valid for 5 years with 5-year renewals.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+let projects = []; let markers = []; let goldenActive = false;
+const map = L.map('map').setView([37.97, 23.85], 10);
+L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png').addTo(map);
+
+// SABİT NOKTALAR
+const staticPoints = [
+  { lat: 37.936928378430736, lng: 23.944834564258954, title: "Atina Havalimanı", icon: "✈" },
+  { lat: 37.97155864169338, lng: 23.725819963160742, title: "Akropolis", icon: "🏛️" }
+];
+
+staticPoints.forEach(p => {
+  const customIcon = L.divIcon({
+    html: `<div style="font-size:24px; filter: drop-shadow(0 2px 3px rgba(0,0,0,0.3)); cursor:pointer;">${p.icon}</div>`,
+    className: '', iconSize: [30, 30], iconAnchor: [15, 15]
+  });
+  const m = L.marker([p.lat, p.lng], {icon: customIcon}).addTo(map);
+  m.bindTooltip(p.title, { permanent: true, direction: 'right', className: 'static-label', offset: [10, 0] });
+});
+
+function loadData() {
+  Papa.parse("https://nuvesta.net/nuvesta_db.csv", {
+    download: true, header: true, skipEmptyLines: true,
+    complete: function(results) {
+      projects = results.data.map(p => ({
+        ...p,
+        minPrice: parseFloat(p.minPrice) || 0,
+        maxPrice: parseFloat(p.maxPrice) || 0,
+        lat: parseFloat(p.lat),
+        lng: parseFloat(p.lng)
+      }));
+      updateLocationFilter();
+      createMarkers();
+    }
+  });
+}
+
+function updateLocationFilter() {
+  const select = document.getElementById('f-konum');
+  const locations = [...new Set(projects.map(p => p.location))].sort();
+  locations.forEach(loc => { if(loc) { let opt = document.createElement('option'); opt.value = loc; opt.textContent = loc; select.appendChild(opt); } });
+
+  const rentals = [...new Set(projects.map(p => p.rental).filter(Boolean))].sort();
+  const rSelect = document.getElementById('f-rental');
+  rentals.forEach(r => {
+    let opt = document.createElement('option'); opt.value = r; opt.textContent = r; rSelect.appendChild(opt);
+  });
+}
+
+function createMarkers() {
+  markers.forEach(m => map.removeLayer(m)); markers = [];
+  projects.forEach(p => {
+    if(!p.lat || !p.lng) return;
+    const isG = (p.goldenVisa === "TRUE" || p.goldenVisa === "true");
+    const color = isG ? "#D4A017" : "#0D5EAF";
+    const icon = L.divIcon({
+      html: `<svg width="24" height="24" style="cursor:pointer;"><circle cx="12" cy="12" r="10" fill="${color}" stroke="white" stroke-width="2"/><circle cx="12" cy="12" r="4" fill="white" opacity="0.8"/></svg>`,
+      className: '', iconSize: [24, 24], iconAnchor: [12, 12]
+    });
+    const m = L.marker([p.lat, p.lng], {icon: icon}).bindPopup(buildPopup(p), {maxWidth: 280});
+    m._data = p; m._isG = isG; markers.push(m); m.addTo(map);
+  });
+  applyFilter();
+}
+
+function buildPopup(p) {
+  const gBadge = (p.goldenVisa === "TRUE" || p.goldenVisa === "true") ? `<div class="pu-golden-badge">€250.000 Golden Visa</div>` : '';
+  const formattedBedrooms = p.bedrooms ? p.bedrooms.split(/[-–,]/).map(b => b.trim() + "+1").join(" – ") : '-';
+  
+  const fmt = n => n.toLocaleString('tr-TR');
+  const priceDisplay = (p.maxPrice > p.minPrice)
+    ? `${fmt(p.minPrice)} € - ${fmt(p.maxPrice)} €`
+    : `${fmt(p.minPrice)} €`;
+
+  return `
+    <div class="pu-img-wrap">
+      <img src="./${p.photo || 'images/placeholder.jpg'}" onerror="this.src='https://via.placeholder.com/270x150?text=Nuvesta'">
+      <div class="pu-delivery-badge">${p.delivery || 'TBA'}</div>
+      ${gBadge}
+    </div>
+    <div class="pu-body">
+      <div class="pu-title">${p.projectName || p.title || 'Nuvesta Project'}</div>
+      <div class="pu-loc">${p.location || ''}, Atina</div>
+      <div class="pu-price-val">${priceDisplay}</div>
+      <div class="pu-details">
+        <div class="pu-detail">
+          <div class="pu-detail-label">Alan</div>
+          <div class="pu-detail-val">${p.area || '-'}</div>
+        </div>
+        <div class="pu-detail">
+          <div class="pu-detail-label">Tip</div>
+          <div class="pu-detail-val">${formattedBedrooms}</div>
+        </div>
+      </div>
+      <a href="https://wa.me/905327858087" target="_blank" class="pu-btn">Detaylı Bilgi Al →<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 32 32"><circle cx="16" cy="16" r="16" fill="#25D366"/><path d="M23.5 8.5A10.07 10.07 0 0 0 16 5.5C10.75 5.5 6.5 9.75 6.5 15a9.44 9.44 0 0 0 1.35 4.9L6.5 26.5l6.77-1.33A9.9 9.9 0 0 0 16 25.5c5.25 0 9.5-4.25 9.5-9.5a9.44 9.44 0 0 0-2-5.5zm-7.5 14.6a8.3 8.3 0 0 1-4.24-1.16l-.3-.18-3.14.62.64-3.06-.2-.31A8.24 8.24 0 0 1 7.7 15c0-4.58 3.73-8.3 8.3-8.3A8.3 8.3 0 0 1 24.3 15c0 4.58-3.72 8.1-8.3 8.1zm4.55-6.1c-.25-.13-1.47-.73-1.7-.81s-.39-.12-.56.12-.64.81-.79.98-.29.19-.54.06a6.8 6.8 0 0 1-2-1.23 7.5 7.5 0 0 1-1.38-1.72c-.14-.25 0-.38.11-.51s.25-.29.37-.44a1.7 1.7 0 0 0 .25-.42.46.46 0 0 0-.02-.44c-.06-.13-.56-1.34-.76-1.84s-.4-.42-.56-.43h-.47a.91.91 0 0 0-.66.31 2.77 2.77 0 0 0-.86 2.06 4.82 4.82 0 0 0 1 2.55 11 11 0 0 0 4.23 3.73c.59.25 1.05.4 1.41.51a3.4 3.4 0 0 0 1.56.1 2.55 2.55 0 0 0 1.67-1.18 2.07 2.07 0 0 0 .14-1.18c-.05-.11-.22-.17-.47-.3z" fill="#fff"/></svg></a>
+    </div>
+  `;
+}
+
+function applyFilter() {
+  const durum = document.getElementById('f-durum').value;
+  const fiyat = document.getElementById('f-fiyat').value;
+  const rental = document.getElementById('f-rental').value;
+  const konum = document.getElementById('f-konum').value;
+
+  ['f-durum','f-fiyat','f-rental','f-konum'].forEach(id => {
+    const el = document.getElementById(id);
+    el.classList.toggle('active-filter', el.value !== '');
+  });
+
+  let count = 0; 
+  let absoluteMin = Infinity; 
+  let absoluteMax = -Infinity;
+
+  markers.forEach(m => {
+    const p = m._data;
+    const gMatch = !goldenActive || m._isG;
+    const dMatch = !durum || (p.delivery && p.delivery.includes(durum));
+    const kMatch = !konum || p.location === konum;
+    const rMatch = !rental || p.rental === rental;
+    let fMatch = true;
+    if(fiyat === 'lt250') fMatch = p.minPrice < 250000;
+    else if(fiyat === '250to400') fMatch = p.minPrice >= 250000 && p.minPrice <= 400000;
+    else if(fiyat === 'gt400') fMatch = p.minPrice > 400000;
+
+    if(gMatch && dMatch && kMatch && rMatch && fMatch){
+      m.addTo(map); count++;
+      
+      const pMin = p.minPrice;
+      const pMax = p.maxPrice > 0 ? p.maxPrice : p.minPrice;
+
+      if(pMin > 0 && pMin < absoluteMin) absoluteMin = pMin;
+      if(pMax > 0 && pMax < absoluteMin) absoluteMin = pMax;
+      if(pMax > absoluteMax) absoluteMax = pMax;
+      if(pMin > absoluteMax) absoluteMax = pMin;
+
+    } else { map.removeLayer(m); }
+  });
+
+  document.getElementById('h-count').textContent = count + " Proje";
+  
+  let rangeText = "—";
+  if (count > 0) {
+    if (absoluteMax > absoluteMin) {
+      rangeText = `€${absoluteMin.toLocaleString()} - €${absoluteMax.toLocaleString()}`;
+    } else {
+      rangeText = `€${absoluteMin.toLocaleString()}`;
+    }
+  }
+  document.getElementById('h-range').textContent = rangeText;
+}
+
+function toggleGolden() {
+  goldenActive = !goldenActive;
+  document.getElementById('golden-btn').classList.toggle('active');
+  applyFilter();
+}
+
+function toggleModal(open) {
+  document.getElementById('gvModal').classList.toggle('open', open);
+}
+
+// ŞİFRE DOĞRULAMA
+const HASH = "1c4b1dd4e3a19867a93e260cee3db578219e50fd13345e61dfe2b1613e37f2a4";
+
+async function checkLogin() {
+  const val = document.getElementById('login-pass').value;
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(val));
+  const hash = Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+  if (hash === HASH) {
+    document.getElementById('login-overlay').style.display = 'none';
+    sessionStorage.setItem('nuvesta_auth', '1');
+  } else {
+    const inp = document.getElementById('login-pass');
+    inp.classList.add('error');
+    document.getElementById('login-error').textContent = 'Şifre hatalı, tekrar deneyin.';
+    setTimeout(() => inp.classList.remove('error'), 400);
+  }
+}
+
+// Oturum kontrolü
+if (sessionStorage.getItem('nuvesta_auth') === '1') {
+  document.getElementById('login-overlay').style.display = 'none';
+}
+
+loadData();
+</script>
+</body>
+</html>
